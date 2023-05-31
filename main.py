@@ -10,7 +10,6 @@ import os
 import time
 
 path = "C:/Users/Christopher/drivers/chromedriver.exe"
-path2 = "C:/Users/h515652/projects/drivers/chromedriver.exe"
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option("detach", True)
@@ -26,6 +25,11 @@ driver.get(url)
 cookie = driver.find_element(By.ID, "cookie")
 upgrades = driver.find_elements(By.CSS_SELECTOR, "#store div")
 upgrade_ids = [item.get_attribute("id") for item in upgrades]
+export_save = driver.find_element(By.ID, "exportSave")
+import_save = driver.find_element(By.ID, "importSave")
+reset = driver.find_element(By.ID, "reset")
+
+
 # for upgrade in upgrades:
 #     upgrade_ids.append(upgrade.get_attribute("id"))
 
@@ -96,6 +100,16 @@ def get_number_of_cookies():
 
 
 def my_code(buy_time, stop_time):
+    # pdb.set_trace()
+    try:
+        with open("data/save.data", "r") as input:
+            code = input.readline()
+    except FileNotFoundError:
+        print("No saved data found")
+        code = None
+
+    if code:
+        driver.execute_script("ImportResponse('1|" + code + "');")
     while True:
         cookie.click()
         if time.time() > buy_time:
@@ -138,10 +152,16 @@ def my_code(buy_time, stop_time):
         if time.time() > stop_time:
             cookies_per_s = driver.find_element(By.ID, "cps").text
             print(f"\nEND\nCookies per second: {cookies_per_s}")
+            # pdb.set_trace()
+            save_string = driver.execute_script("return MakeSaveString();")
+            with open("data/save.data", "w") as file:
+                file.write(save_string)
             break
 
-    # driver.quit()
+    time.sleep(5)
+    driver.quit()
 
 
 # working_code(timeout=PAUSE_TIMER, five_min=END_TIMER)
-my_code(buy_time=time.time() + 5, stop_time=time.time() + 30)
+my_code(buy_time=time.time() + 5, stop_time=time.time() + 10)
+
