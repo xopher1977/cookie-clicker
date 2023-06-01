@@ -29,7 +29,6 @@ export_save = driver.find_element(By.ID, "exportSave")
 import_save = driver.find_element(By.ID, "importSave")
 reset = driver.find_element(By.ID, "reset")
 
-
 # for upgrade in upgrades:
 #     upgrade_ids.append(upgrade.get_attribute("id"))
 
@@ -38,59 +37,7 @@ items = driver.find_elements(By.CSS_SELECTOR, "#store div")
 item_ids = [item.get_attribute("id") for item in items]
 
 PAUSE_TIMER = time.time() + 5
-END_TIMER = time.time() + 60 * 5  # 5minutes
-
-
-def working_code(timeout, five_min):
-    while True:
-        cookie.click()
-
-        # Every 5 seconds:
-        if time.time() > timeout:
-
-            # Get all upgrade <b> tags
-            all_prices = driver.find_elements(By.CSS_SELECTOR, "#store b")
-            item_prices = []
-
-            # Convert <b> text into an integer price.
-            for price in all_prices:
-                element_text = price.text
-                if element_text != "":
-                    cost = int(element_text.split("-")[1].strip().replace(",", ""))
-                    item_prices.append(cost)
-
-            # Create dictionary of store items and prices
-            cookie_upgrades = {}
-            for n in range(len(item_prices)):
-                cookie_upgrades[item_prices[n]] = item_ids[n]
-
-            # Get current cookie count
-            money_element = driver.find_element(By.ID, "money").text
-            if "," in money_element:
-                money_element = money_element.replace(",", "")
-            cookie_count = int(money_element)
-
-            # Find upgrades that we can currently afford
-            affordable_upgrades = {}
-            for cost, id in cookie_upgrades.items():
-                if cookie_count > cost:
-                    affordable_upgrades[cost] = id
-
-            # Purchase the most expensive affordable upgrade
-            highest_price_affordable_upgrade = max(affordable_upgrades)
-            print(highest_price_affordable_upgrade)
-            to_purchase_id = affordable_upgrades[highest_price_affordable_upgrade]
-
-            driver.find_element(By.ID, to_purchase_id).click()
-
-            # Add another 5 seconds until the next check
-            timeout = time.time() + 5
-
-        # After 5 minutes stop the bot and check the cookies per second count.
-        if time.time() > five_min:
-            cookie_per_s = driver.find_element(By.ID, "cps").text
-            print(cookie_per_s)
-            break
+END_TIMER = time.time() + 60 * 15  # 15 minutes
 
 
 def get_number_of_cookies():
@@ -99,7 +46,7 @@ def get_number_of_cookies():
     return int(money_element)
 
 
-def my_code(buy_time, stop_time):
+def make_cookies(buy_time, stop_time):
     # pdb.set_trace()
     try:
         with open("data/save.data", "r") as input:
@@ -113,7 +60,7 @@ def my_code(buy_time, stop_time):
     while True:
         cookie.click()
         if time.time() > buy_time:
-            print("\nBuying most expense upgrade\n===================================")
+            print("\nBuying most expensive upgrade\n===================================")
             all_prices = driver.find_elements(By.CSS_SELECTOR, "#store b")
             item_prices = []
             buy_time = time.time() + 5
@@ -142,12 +89,16 @@ def my_code(buy_time, stop_time):
 
             print(f"Affordable Upgrades:  {affordable_upgrades}")
 
-            # purchase most expensive affordable upgrade
-            most_expensive_upgrade = max(affordable_upgrades)
-            # print(f"Most expensive affordable upgrade: {max(affordable_upgrades)}")
-            purchase_id = affordable_upgrades[most_expensive_upgrade]
-            print(f"==> {purchase_id}")
-            driver.find_element(By.ID, purchase_id).click()
+            if len(affordable_upgrades) > 0:
+                # purchase most expensive affordable upgrade
+                most_expensive_upgrade = max(affordable_upgrades)
+                # print(f"Most expensive affordable upgrade: {max(affordable_upgrades)}")
+                purchase_id = affordable_upgrades[most_expensive_upgrade]
+                print(f"==> {purchase_id}")
+                driver.find_element(By.ID, purchase_id).click()
+            else:
+                print("Sorry, you don't have enough cookies to purchase any upgrades at the moment.  Keep making "
+                      "cookies!!!")
 
         if time.time() > stop_time:
             cookies_per_s = driver.find_element(By.ID, "cps").text
@@ -162,6 +113,4 @@ def my_code(buy_time, stop_time):
     driver.quit()
 
 
-# working_code(timeout=PAUSE_TIMER, five_min=END_TIMER)
-my_code(buy_time=time.time() + 5, stop_time=time.time() + 10)
-
+make_cookies(buy_time=PAUSE_TIMER, stop_time=END_TIMER)
